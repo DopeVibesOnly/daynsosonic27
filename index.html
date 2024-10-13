@@ -1,0 +1,795 @@
+<html>
+
+<head>
+  <base href="https://clickergame.example.com/v5">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>реворк смачного кликера</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #game-area {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .coin {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      transition: transform 0.3s ease-out;
+      z-index: 1;
+    }
+
+    .coin:hover {
+      transform: scale(1.1);
+    }
+
+    #score {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 10px 20px;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      color: #2c3e50;
+    }
+
+    #menu-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      padding: 12px 24px;
+      background-color: #8e44ad;
+      background-image: linear-gradient(45deg, #8e44ad, #3498db);
+      color: white;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    #menu-button:hover {
+      background-image: linear-gradient(45deg, #7f3fbf, #2980b9);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    #upgrades-menu {
+      display: none;
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 350px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 5;
+      transition: all 0.3s ease;
+    }
+
+    .upgrade-section {
+      margin-bottom: 25px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 15px;
+    }
+
+    .upgrade-section h2 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-size: 24px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .upgrade-item {
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      z-index: 15;
+    }
+
+    .upgrade-item:hover {
+      background-color: #f0f0f0;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .upgrade-item h3 {
+      margin-top: 0;
+      color: #34495e;
+      font-size: 20px;
+    }
+
+    .upgrade-item p {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #7f8c8d;
+    }
+
+    .upgrade-item button {
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .upgrade-item button:hover {
+      background-color: #27ae60;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .upgrade-item button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    @keyframes confetti {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(1000px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #f0f;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Boss Coin Styles */
+    .boss-coin {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      z-index: 1000;
+      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+      padding: 0;
+      margin: 0;
+    }
+
+    .boss-coin.hidden {
+      display: none;
+    }
+
+    .boss-coin.active {
+      display: block;
+    }
+
+    .boss-coin.cracking {
+      animation: bossCrack 0.5s forwards;
+    }
+
+    @keyframes bossCrack {
+      0% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      }
+
+      50% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(15deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1) rotate(-15deg);
+      }
+    }
+
+    .boss-piece {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #FFD700;
+      border: 2px solid #DAA520;
+      border-radius: 50%;
+      animation: bossBreak 1s forwards;
+    }
+
+    @keyframes bossBreak {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(0.5) rotate(360deg);
+      }
+    }
+
+    /* Reward Message Styles */
+    .reward-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 24px;
+      color: #2c3e50;
+      opacity: 0;
+      transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+      z-index: 25;
+    }
+
+    .reward-message.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .reward-message.hidden {
+      opacity: 0;
+      transform: translate(-50%, -60%) scale(0.8);
+    }
+
+    /* Анимация монеты при клике на босса */
+    .boss-click-coin {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="23" fill="%23FFD700" stroke="%23DAA520" stroke-width="2"/><text x="25" y="30" font-size="20" text-anchor="middle" fill="%23DAA520">$</text></svg>');
+      background-size: cover;
+      pointer-events: none;
+      animation: clickCoin 1s forwards;
+    }
+
+    @keyframes clickCoin {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -150%) scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    .animate-click {
+      animation: clickEffect 1s forwards;
+    }
+
+    @keyframes clickEffect {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -150%) scale(1.5);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-area">
+    <div id="score">💰 Монеты: 1</div>
+    <button id="menu-button">🛠️ Меню</button>
+    <div id="upgrades-menu"></div>
+    <div id="boss-coin" class="boss-coin hidden">
+      <svg viewBox="0 0 100 100" width="100" height="100">
+        <circle cx="50" cy="50" r="48" fill="#FFD700" stroke="#DAA520" stroke-width="4" />
+        <text x="50" y="60" font-size="30" text-anchor="middle" fill="#DAA520">💰</text>
+      </svg>
+    </div>
+    <div id="reward-message" class="reward-message hidden">Награда: 0 монет!</div>
+  </div>
+
+  <script>
+    let score = 1;
+    let maxCoins = 1;
+    let coinSpeed = 4000;
+    let coinValue = 1;
+    let autoClickerInterval = null;
+    let autoClickerPower = 0;
+    let coinSpawnRate = 2000; // Fixed at 2000ms
+    let coinSpawnInterval = setInterval(() => {
+      createCoin();
+    }, coinSpawnRate);
+    let lastClickTime = 0;
+    let multiCoinChance = 0;
+    let multiCoinCount = 1;
+
+    // Добавление переменных для босса
+    let bossInterval = setInterval(spawnBoss, 60000); // Появление босса каждые 60 секунд
+    let bossActive = false;
+    let bossClickCount = 0;
+    let bossClickDelay = false;
+    let accumulatedBossCoins = 0; // Накопление монет при клике на босса
+
+    const upgrades = [
+      {
+        section: "Монеты 💰",
+        items: [
+          {
+            name: "Ценные монеты 💎",
+            description: "Увеличивает стоимость каждой монеты на 1",
+            cost: 25,
+            maxLevel: 5,
+            currentLevel: 0,
+            effect: () => {
+              coinValue += 1;
+            }
+          },
+          {
+            name: "Мультимонеты 🎲",
+            description: "10% шанс появления нескольких монет сразу",
+            cost: 100,
+            maxLevel: 5,
+            currentLevel: 0,
+            effect: () => {
+              multiCoinChance = Math.min(1, multiCoinChance + 0.1);
+              multiCoinCount = Math.min(5, multiCoinCount + 1);
+            }
+          },
+          {
+            name: "Золотая лихорадка 🌟",
+            description: "Одноразовое улучшение. Увеличивает стоимость всех монет на 50%",
+            cost: 250,
+            maxLevel: 1,
+            currentLevel: 0,
+            effect: () => {
+              coinValue = Math.ceil(coinValue * 1.5);
+            }
+          },
+          {
+            name: "Увеличение количества монет 🌟",
+            description: "Позволяет выпускать больше монет одновременно.",
+            cost: 150,
+            maxLevel: 3,
+            currentLevel: 0,
+            effect: () => {
+              maxCoins = 1 + upgrades[0].items[3].currentLevel;
+            }
+          }
+        ]
+      },
+      {
+        section: "Автоматизация 🤖",
+        items: [
+          {
+            name: "Автокликер",
+            description: "Автоматически добавляет 1 монету каждые 10 секунд",
+            cost: 50,
+            maxLevel: 5,
+            currentLevel: 0,
+            effect: () => {
+              clearInterval(autoClickerInterval);
+              autoClickerPower += 1;
+              autoClickerInterval = setInterval(() => {
+                addCoins(autoClickerPower);
+              }, 10000);
+            }
+          }
+        ]
+      },
+      {
+        section: "Специальные 🎉",
+        items: [
+          {
+            name: "Монетный дождь 🌈",
+            description: "Одноразовое улучшение. Вызывает дождь из монет!",
+            cost: 500,
+            maxLevel: 1,
+            currentLevel: 0,
+            effect: () => {
+              for (let i = 0; i < 20; i++) {
+                setTimeout(() => createCoin(true), i * 200);
+              }
+            }
+          }
+        ]
+      },
+      {
+        section: "Бонусы 🎁",
+        items: [
+          {
+            name: "Ускорение появления монет ⏩",
+            description: "Уменьшает интервал появления монет на 10%",
+            cost: 125,
+            maxLevel: 5,
+            currentLevel: 0,
+            effect: () => {
+              coinSpawnRate = 2000;
+              clearInterval(coinSpawnInterval);
+              coinSpawnInterval = setInterval(() => {
+                createCoin();
+              }, coinSpawnRate);
+            }
+          },
+          {
+            name: "Бонусная стоимость монет 💰💰",
+            description: "Увеличивает стоимость монет на 5% умножительно",
+            cost: 200,
+            maxLevel: 5,
+            currentLevel: 0,
+            effect: () => {
+              coinValue = Math.ceil(coinValue * 1.05);
+            }
+          },
+          {
+            name: "x2 монеты ✌️",
+            description: "Каждый клик на монету дает в 2 раза больше монет",
+            cost: 300,
+            maxLevel: 3,
+            currentLevel: 0,
+            effect: () => {
+              coinValue *= 2;
+            }
+          }
+        ]
+      }
+    ];
+
+    function updateScore() {
+      document.getElementById('score').textContent = `💰 Монеты: ${score}`;
+    }
+
+    function addCoins(amount) {
+      score += amount;
+      updateScore();
+      saveGame();
+    }
+
+    function createCoin(isRainCoin = false) {
+      if (document.querySelectorAll('.coin').length >= maxCoins) return;
+
+      const coinCount = isRainCoin ? 1 : (Math.random() < multiCoinChance ? multiCoinCount : 1);
+
+      for (let i = 0; i < coinCount; i++) {
+        const coin = document.createElement('div');
+        coin.className = 'coin';
+        coin.setAttribute('data-clicked', 'false');
+
+        const side = Math.random() < 0.5 ? 'left' : 'right';
+        if (side === 'left') {
+          coin.style.left = '-50px';
+          coin.style.top = `${Math.random() * window.innerHeight}px`;
+        } else {
+          coin.style.left = `${window.innerWidth}px`;
+          coin.style.top = `${Math.random() * window.innerHeight}px`;
+        }
+
+        const coinSVG = `
+      <svg viewBox="0 0 50 50" width="50" height="50">
+        <circle cx="25" cy="25" r="23" fill="#FFD700" stroke="#DAA520" stroke-width="2"/>
+        <text x="25" y="30" font-size="20" text-anchor="middle" fill="#DAA520">$</text>
+      </svg>
+    `;
+
+        coin.innerHTML = coinSVG;
+        document.getElementById('game-area').appendChild(coin);
+
+        const targetX = Math.random() * window.innerWidth;
+        const targetY = Math.random() * window.innerHeight;
+        const animationDuration = coinSpeed;
+
+        let startTime = null;
+        function animate(currentTime) {
+          if (!startTime) startTime = currentTime;
+          const elapsed = currentTime - startTime;
+          const progress = elapsed / animationDuration;
+
+          if (progress < 1) {
+            const x = parseFloat(coin.style.left) + (targetX - parseFloat(coin.style.left)) * progress;
+            const y = parseFloat(coin.style.top) + (targetY - parseFloat(coin.style.top)) * progress;
+            coin.style.transform = `translate(${x - parseFloat(coin.style.left)}px, ${y - parseFloat(coin.style.top)}px)`;
+            requestAnimationFrame(animate);
+          } else {
+            coin.remove();
+            if (!isRainCoin) setTimeout(createCoin, coinSpawnRate);
+          }
+        }
+
+        requestAnimationFrame(animate);
+
+        coin.addEventListener('mousedown', (e) => {
+          if (coin.getAttribute('data-clicked') === 'true') return;
+          coin.setAttribute('data-clicked', 'true');
+
+          const currentTime = new Date().getTime();
+          if (currentTime - lastClickTime > 50) {
+            lastClickTime = currentTime;
+            addCoins(coinValue);
+            coin.style.transition = 'transform 0.3s, opacity 0.3s';
+            coin.style.transform += ' scale(1.5)';
+            coin.style.opacity = '0';
+            setTimeout(() => {
+              coin.remove();
+            }, 300);
+          }
+          e.preventDefault();
+        });
+      }
+    }
+
+    // Функция для появления босса
+    function spawnBoss() {
+      if (bossActive) return;
+      bossActive = true;
+      const boss = document.getElementById('boss-coin');
+      boss.classList.remove('hidden');
+      boss.classList.add('active');
+
+      // Remove any existing event listeners to prevent duplicates
+      boss.removeEventListener('click', handleBossClick);
+      boss.addEventListener('click', handleBossClick);
+
+      // Start the boss fight timer
+      setTimeout(endBossFight, 10000);
+    }
+
+    // Обработчик кликов по боссу
+    function handleBossClick(e) {
+      const boss = document.getElementById('boss-coin');
+      // Check if the clicked target is the boss or a child of the boss
+      if (!boss.contains(e.target)) return;
+
+      if (bossClickDelay) return; // Prevent click if in cooldown
+
+      bossClickDelay = true; // Set cooldown
+      bossClickCount++;
+      accumulatedBossCoins += 1; // Накопление монет за каждый клик
+
+      boss.classList.add('cracking');
+
+      // Создаем анимацию монеты
+      createBossClickAnimation(e.clientX, e.clientY);
+
+      // Удаляем класс анимации после завершения
+      setTimeout(() => {
+        boss.classList.remove('cracking');
+        bossClickDelay = false; // Reset cooldown
+      }, 2000); // 2-second cooldown
+
+      e.preventDefault();
+    }
+
+    // Функция завершения боя с боссом
+    function endBossFight() {
+      const boss = document.getElementById('boss-coin');
+      boss.classList.remove('active');
+      boss.classList.add('hidden'); // Hide the boss after the fight
+
+      // Анимация разлетающихся кусков
+      createBossBreakAnimation();
+
+      bossActive = false;
+
+      // Вычисляем награду на основе накопленных монет
+      const reward = accumulatedBossCoins * 2;
+      addCoins(reward);
+      accumulatedBossCoins = 0; // Сброс накопленных монет
+
+      // Отображаем сообщение о награде
+      showRewardMessage(reward);
+    }
+
+    // Функция для создания анимации монеты при клике на босса
+    function createBossClickAnimation(x, y) {
+      const coin = document.createElement('div');
+      coin.className = 'boss-click-coin animate-click';
+      coin.style.left = `${x}px`;
+      coin.style.top = `${y}px`;
+      document.body.appendChild(coin);
+
+      // Удаляем элемент после анимации
+      setTimeout(() => {
+        coin.remove();
+      }, 1000);
+    }
+
+    // Функция для анимации разлетающихся кусков босса
+    function createBossBreakAnimation() {
+      const boss = document.getElementById('boss-coin'); // Define the boss variable
+      const bossArea = document.getElementById('game-area');
+      const bossRect = boss.getBoundingClientRect();
+
+      for (let i = 0; i < 10; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'boss-piece';
+        piece.style.left = `${bossRect.left + bossRect.width / 2 - 25}px`;
+        piece.style.top = `${bossRect.top + bossRect.height / 2 - 25}px`;
+        bossArea.appendChild(piece);
+
+        // Случайное направление и расстояние
+        const angle = Math.random() * 360;
+        const distance = Math.random() * 300 + 100; // 100px до 400px
+        piece.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        piece.style.transition = `transform 1s ease-out, opacity 1s ease-out`;
+        setTimeout(() => {
+          piece.style.transform = `translate(${Math.cos(angle * Math.PI / 180) * distance}px, ${Math.sin(angle * Math.PI / 180) * distance}px) rotate(${angle + 360}deg)`;
+          piece.style.opacity = '0';
+        }, 10);
+
+        // Удаляем кусок после анимации
+        setTimeout(() => {
+          piece.remove();
+        }, 1010);
+      }
+    }
+
+    function updateUpgradesMenu() {
+      const menu = document.getElementById('upgrades-menu');
+      menu.innerHTML = '';
+
+      upgrades.forEach((section, sectionIndex) => {
+        const sectionElement = document.createElement('div');
+        sectionElement.className = 'upgrade-section';
+        sectionElement.innerHTML = `<h2>${section.section} 🎯</h2>`;
+
+        section.items.forEach((upgrade, index) => {
+          const upgradeElement = document.createElement('div');
+          upgradeElement.className = 'upgrade-item';
+          upgradeElement.innerHTML = `
+        <h3>${upgrade.name}</h3>
+        <p>${upgrade.description}</p>
+        <p>Стоимость: ${upgrade.cost}</p>
+        <p>Уровень: ${upgrade.currentLevel}/${upgrade.maxLevel}</p>
+        <button onclick="buyUpgrade('${section.section}', ${index})" ${(score < upgrade.cost || upgrade.currentLevel >= upgrade.maxLevel) ? 'disabled' : ''}>Купить</button>
+      `;
+          sectionElement.appendChild(upgradeElement);
+        });
+
+        menu.appendChild(sectionElement);
+      });
+    }
+
+    function createConfetti() {
+      const confettiCount = 100;
+      const colors = ['#f0f', '#0ff', '#ff0', '#0f0', '#00f'];
+
+      for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.top = '-10px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animation = `confetti ${Math.random() * 3 + 2}s linear`;
+        document.body.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 5000);
+      }
+    }
+
+    function buyUpgrade(sectionName, index) {
+      const section = upgrades.find(s => s.section === sectionName);
+      const upgrade = section.items[index];
+      if (score >= upgrade.cost && upgrade.currentLevel < upgrade.maxLevel) {
+        score -= upgrade.cost;
+        upgrade.currentLevel++;
+        upgrade.effect();
+        upgrade.cost = Math.floor(upgrade.cost * 1.3);
+        updateScore();
+        updateUpgradesMenu();
+        createConfetti();
+        saveGame();
+      }
+    }
+
+    function saveGame() {
+      const gameData = {
+        score,
+        maxCoins,
+        coinSpeed,
+        coinValue,
+        autoClickerPower,
+        coinSpawnRate,
+        multiCoinChance,
+        multiCoinCount,
+        upgrades
+      };
+      localStorage.setItem('clickerGameSave', JSON.stringify(gameData));
+    }
+
+    function loadGame() {
+      const savedData = localStorage.getItem('clickerGameSave');
+      if (savedData) {
+        const gameData = JSON.parse(savedData);
+        score = gameData.score || 1;
+        maxCoins = gameData.maxCoins || 1;
+        coinSpeed = gameData.coinSpeed || 4000;
+        coinValue = gameData.coinValue || 1;
+        autoClickerPower = gameData.autoClickerPower || 0;
+        coinSpawnRate = gameData.coinSpawnRate || 2000;
+        multiCoinChance = gameData.multiCoinChance || 0;
+        multiCoinCount = gameData.multiCoinCount || 1;
+
+        if (gameData.upgrades && Array.isArray(gameData.upgrades)) {
+          upgrades.forEach((section, sectionIndex) => {
+            const savedSection = gameData.upgrades[sectionIndex];
+            if (savedSection && Array.isArray(savedSection.items)) {
+              section.items.forEach((upgrade, itemIndex) => {
+                const savedUpgrade = savedSection.items[itemIndex];
+                if (savedUpgrade) {
+                  upgrade.currentLevel = savedUpgrade.currentLevel || 0;
+                  upgrade.cost = savedUpgrade.cost || upgrade.cost;
+                } else {
+                  console.warn(`Missing upgrade data for section ${sectionIndex}, item ${itemIndex}. Using default values.`);
+                }
+              });
+            } else {
+              console.warn(`Missing section data for section ${sectionIndex}. Skipping upgrades in this section.`);
+            }
+          });
+        }
+
+        updateScore();
+        updateUpgradesMenu();
+      }
+    }
+
+    function showRewardMessage(reward) {
+      const message = document.getElementById('reward-message');
+      message.textContent = `Награда: ${reward} монет!`;
+      message.classList.add('show');
+      message.classList.remove('hidden');
+
+      setTimeout(() => {
+        message.classList.remove('show');
+      }, 3000);
+    }
+
+    window.addEventListener('beforeunload', saveGame);
+    document.getElementById('menu-button').addEventListener('click', saveGame);
+    document.getElementById('upgrades-menu').addEventListener('click', saveGame);
+
+    document.getElementById('menu-button').addEventListener('click', () => {
+      const menu = document.getElementById('upgrades-menu');
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      updateUpgradesMenu();
+    });
+
+    window.onload = loadGame;
+
+    updateScore();
+    createCoin();
+  </script>
+</body>
+
+</html>
