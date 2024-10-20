@@ -4,7 +4,7 @@
   <base href="https://clickergame.example.com/v5">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>реворк смачного кликера</title>
+  <title>сигма кликер</title>
   <style>
     body {
       font-family: 'Roboto', sans-serif;
@@ -66,6 +66,29 @@
 
     #menu-button:hover {
       background-image: linear-gradient(45deg, #7f3fbf, #2980b9);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    #mini-game-button {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      font-size: 24px;
+      padding: 12px 24px;
+      background-color: #e67e22;
+      background-image: linear-gradient(45deg, #e67e22, #d35400);
+      color: white;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    #mini-game-button:hover {
+      background-image: linear-gradient(45deg, #cf711f, #c0392b);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
@@ -265,43 +288,99 @@
       transform: translate(-50%, -60%) scale(0.8);
     }
 
-    /* Анимация монеты при клике на босса */
-    .boss-click-coin {
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      text-align: center;
+      position: relative;
+      max-width: 80%;
+    }
+
+    .close-button {
       position: absolute;
-      width: 30px;
-      height: 30px;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="23" fill="%23FFD700" stroke="%23DAA520" stroke-width="2"/><text x="25" y="30" font-size="20" text-anchor="middle" fill="%23DAA520">$</text></svg>');
-      background-size: cover;
-      pointer-events: none;
-      animation: clickCoin 1s forwards;
+      top: 15px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      transition: color 0.2s ease;
     }
 
-    @keyframes clickCoin {
-      0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-      }
-
-      100% {
-        transform: translate(-50%, -150%) scale(1.5);
-        opacity: 0;
-      }
+    .close-button:hover {
+      color: #e74c3c;
     }
 
-    .animate-click {
-      animation: clickEffect 1s forwards;
+    #reward-text {
+      font-size: 24px;
+      color: #2c3e50;
     }
 
-    @keyframes clickEffect {
-      0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-      }
+    /* Оверлей для игры паркур */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
 
-      100% {
-        transform: translate(-50%, -150%) scale(1.5);
-        opacity: 0;
-      }
+    .hidden {
+      display: none;
+    }
+
+    #parkour-game {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      background-color: #333;
+      border: 5px solid #fff;
+      border-radius: 10px;
+    }
+
+    #close-parkour {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px 20px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 2100;
+    }
+
+    #close-parkour:hover {
+      background-color: #c0392b;
     }
   </style>
 </head>
@@ -310,6 +389,7 @@
   <div id="game-area">
     <div id="score">💰 Монеты: 1</div>
     <button id="menu-button">🛠️ Меню</button>
+    <button id="mini-game-button">🎮 Паркур</button>
     <div id="upgrades-menu"></div>
     <div id="boss-coin" class="boss-coin hidden">
       <svg viewBox="0 0 100 100" width="100" height="100">
@@ -318,6 +398,18 @@
       </svg>
     </div>
     <div id="reward-message" class="reward-message hidden">Награда: 0 монет!</div>
+    <div id="reward-modal" class="modal hidden">
+      <div class="modal-content">
+        <span id="close-reward-modal" class="close-button">&times;</span>
+        <p id="reward-text">Поздравляем! Вы получили 50 монет!</p>
+      </div>
+    </div>
+    <div id="parkour-overlay" class="overlay hidden">
+      <div id="parkour-game">
+        <canvas id="parkour-canvas" width="800" height="600"></canvas>
+        <button id="close-parkour">Закрыть</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -336,11 +428,16 @@
     let multiCoinCount = 1;
 
     // Добавление переменных для босса
-    let bossInterval = setInterval(spawnBoss, 60000); // Появление босса каждые 60 секунд
+    let bossInterval = setInterval(spawnBoss, 60000); // Появление босса каждую 60 секунд
     let bossActive = false;
     let bossClickCount = 0;
     let bossClickDelay = false;
     let accumulatedBossCoins = 0; // Накопление монет при клике на босса
+
+    // Объявление parkourCooldown только один раз
+    let parkourCooldown = false;
+    let parkourTimer = null;
+    let parkourEndTime = null;
 
     const upgrades = [
       {
@@ -453,7 +550,7 @@
             }
           },
           {
-            name: "x2 монеты ✌️",
+            name: "Двойной Кликер ✌️",
             description: "Каждый клик на монету дает в 2 раза больше монет",
             cost: 300,
             maxLevel: 3,
@@ -465,6 +562,12 @@
         ]
       }
     ];
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
 
     function updateScore() {
       document.getElementById('score').textContent = `💰 Монеты: ${score}`;
@@ -607,7 +710,7 @@
       accumulatedBossCoins = 0; // Сброс накопленных монет
 
       // Отображаем сообщение о награде
-      showRewardMessage(reward);
+      showRewardModal(reward); // Исправлено на showRewardModal
     }
 
     // Функция для создания анимации монеты при клике на босса
@@ -764,31 +867,248 @@
       }
     }
 
-    function showRewardMessage(reward) {
-      const message = document.getElementById('reward-message');
-      message.textContent = `Награда: ${reward} монет!`;
-      message.classList.add('show');
-      message.classList.remove('hidden');
+    // Function to display the reward modal
+    function showRewardModal(reward) {
+      const modal = document.getElementById('reward-modal');
+      const rewardText = document.getElementById('reward-text');
+      rewardText.textContent = `Поздравляем! Вы получили ${reward} монет!`;
+      modal.classList.add('show');
 
+      // Automatically hide the modal after 3 seconds
       setTimeout(() => {
-        message.classList.remove('show');
+        hideRewardModal();
       }, 3000);
+    }
+
+    // Function to hide the reward modal
+    function hideRewardModal() {
+      const modal = document.getElementById('reward-modal');
+      modal.classList.remove('show');
+    }
+
+    // Update the endParkourGame function to use the modal
+    function endParkourGame(success) {
+      if (success) {
+        const reward = 2; // Награда в монетах
+        addCoins(reward);
+        showRewardModal(reward);
+      } else {
+        alert('Игра завершена.');
+      }
+      document.getElementById('parkour-overlay').classList.add('hidden');
+      startCooldown();
+    }
+
+    // Event listener for closing the reward modal
+    document.getElementById('close-reward-modal').addEventListener('click', hideRewardModal);
+
+    // Function to start cooldown and save end time
+    function startCooldown() {
+      parkourCooldown = true;
+      const button = document.getElementById('mini-game-button');
+      button.disabled = true;
+      const cooldownDuration = 300; // 5 minutes in seconds
+      parkourEndTime = Date.now() + cooldownDuration * 1000;
+      localStorage.setItem('parkourEndTime', parkourEndTime);
+
+      updateCooldownButton();
+
+      parkourTimer = setInterval(() => {
+        updateCooldownButton();
+      }, 1000);
+    }
+
+    // Function to update the cooldown button based on remaining time
+    function updateCooldownButton() {
+      const button = document.getElementById('mini-game-button');
+      const remainingTime = Math.max(0, Math.floor((parkourEndTime - Date.now()) / 1000));
+
+      if (remainingTime > 0) {
+        button.textContent = `🎮 Паркур (${formatTime(remainingTime)})`;
+      } else {
+        clearInterval(parkourTimer);
+        parkourCooldown = false;
+        button.disabled = false;
+        button.textContent = '🎮 Паркур';
+        localStorage.removeItem('parkourEndTime');
+      }
+    }
+
+    // Modify openParkourGame to handle existing cooldown
+    function openParkourGame() {
+      if (parkourCooldown) return;
+      document.getElementById('parkour-overlay').classList.remove('hidden');
+      initializeParkourGame();
+    }
+
+    // Load the cooldown state on page load
+    function loadCooldown() {
+      const savedEndTime = localStorage.getItem('parkourEndTime');
+      if (savedEndTime) {
+        parkourEndTime = parseInt(savedEndTime, 10);
+        const remainingTime = Math.floor((parkourEndTime - Date.now()) / 1000);
+        if (remainingTime > 0) {
+          parkourCooldown = true;
+          const button = document.getElementById('mini-game-button');
+          button.disabled = true;
+          updateCooldownButton();
+          parkourTimer = setInterval(() => {
+            updateCooldownButton();
+          }, 1000);
+        } else {
+          localStorage.removeItem('parkourEndTime');
+        }
+      }
+    }
+
+    // Consolidate window.onload to call both loadGame and loadCooldown
+    window.onload = () => {
+      loadGame();
+      loadCooldown();
+      updateScore();
+      updateUpgradesMenu();
+      createCoin();
+    };
+
+    // Other event listeners
+    document.getElementById('menu-button').addEventListener('click', () => {
+      const menu = document.getElementById('upgrades-menu');
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    });
+
+    document.getElementById('mini-game-button').addEventListener('click', openParkourGame);
+
+    document.getElementById('close-parkour').addEventListener('click', () => {
+      document.getElementById('parkour-overlay').classList.add('hidden');
+    });
+
+    // Game loop for the parkour game
+    function initializeParkourGame() {
+      const canvas = document.getElementById('parkour-canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Игрок
+      const player = {
+        x: 50,
+        y: 500,
+        width: 50,
+        height: 50,
+        color: '#2ecc71',
+        velX: 0,
+        velY: 0,
+        speed: 5,
+        jumping: false,
+        gravity: 0.5,
+        jumpStrength: 12
+      };
+
+      // Платформы
+      const platforms = [
+        { x: 0, y: 550, width: 800, height: 50 },
+        { x: 150, y: 450, width: 100, height: 20 },
+        { x: 300, y: 350, width: 100, height: 20 },
+        { x: 450, y: 250, width: 100, height: 20 },
+        { x: 600, y: 150, width: 100, height: 20 }
+      ];
+
+      // Цель
+      const goal = { x: 750, y: 100, width: 50, height: 50 };
+
+      // Управление
+      const keys = {};
+
+      document.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+      });
+
+      document.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+      });
+
+      function update() {
+        // Движение
+        if (keys['ArrowRight']) {
+          player.velX = player.speed;
+        } else if (keys['ArrowLeft']) {
+          player.velX = -player.speed;
+        } else {
+          player.velX = 0;
+        }
+
+        if (keys['Space'] || keys['ArrowUp']) {
+          if (!player.jumping) {
+            player.velY = -player.jumpStrength;
+            player.jumping = true;
+          }
+        }
+
+        // Применение гравитации
+        player.velY += player.gravity;
+        player.x += player.velX;
+        player.y += player.velY;
+
+        // Граничные условия
+        if (player.y + player.height > canvas.height) {
+          player.y = canvas.height - player.height;
+          player.velY = 0;
+          player.jumping = false;
+        }
+
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        // Проверка столкновений с платформами
+        platforms.forEach(platform => {
+          if (
+            player.x < platform.x + platform.width &&
+            player.x + player.width > platform.x &&
+            player.y + player.height > platform.y &&
+            player.y + player.height < platform.y + platform.height
+          ) {
+            player.y = platform.y - player.height;
+            player.velY = 0;
+            player.jumping = false;
+          }
+        });
+
+        // Проверка достижения цели
+        if (
+          player.x < goal.x + goal.width &&
+          player.x + player.width > goal.x &&
+          player.y < goal.y + goal.height &&
+          player.y + player.height > goal.y
+        ) {
+          endParkourGame(true);
+        }
+
+        render();
+        requestAnimationFrame(update);
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Рисование игрока
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        // Рисование платформ
+        ctx.fillStyle = '#95a5a6';
+        platforms.forEach(platform => {
+          ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        });
+
+        // Рисование цели
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(goal.x, goal.y, goal.width, goal.height);
+      }
+
+      update();
     }
 
     window.addEventListener('beforeunload', saveGame);
     document.getElementById('menu-button').addEventListener('click', saveGame);
     document.getElementById('upgrades-menu').addEventListener('click', saveGame);
-
-    document.getElementById('menu-button').addEventListener('click', () => {
-      const menu = document.getElementById('upgrades-menu');
-      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-      updateUpgradesMenu();
-    });
-
-    window.onload = loadGame;
-
-    updateScore();
-    createCoin();
   </script>
 </body>
 
